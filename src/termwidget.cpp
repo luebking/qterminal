@@ -510,6 +510,13 @@ QDBusObjectPath TermWidget::getTab()
     return findParent<TermWidgetHolder>(this)->getDbusPath();
 }
 
+void TermWidget::activateTerminal()
+{
+    TermWidgetHolder *holder = findParent<TermWidgetHolder>(this);
+    holder->activateTab();
+    setFocus(Qt::OtherFocusReason);
+}
+
 void TermWidget::closeTerminal()
 {
     TermWidgetHolder *holder = findParent<TermWidgetHolder>(this);

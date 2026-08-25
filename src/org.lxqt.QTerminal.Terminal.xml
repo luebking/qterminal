@@ -38,6 +38,7 @@
     <method name="sendText">
         <arg name="text" type="s" direction="in"/>
     </method>
+    <method name="activateTerminal"/>
     <method name="closeTerminal"/>
     <method name="setColorScheme">
       <arg name="text" type="s" direction="in"/>
