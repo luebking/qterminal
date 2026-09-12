@@ -82,6 +82,9 @@ MainWindow::MainWindow(TerminalConfig &cfg,
     setAttribute(Qt::WA_NoSystemBackground, false);
     setAttribute(Qt::WA_DeleteOnClose);
 
+    // see ::showEvent()
+    setProperty("terminal_size_pending", true);
+
     setupUi(this);
 
     // Allow insane small sizes - reason:
@@ -310,8 +313,12 @@ void MainWindow::setup_ActionsMenu_Actions()
     setup_Action(SPLIT_VERTICAL, new QAction(tr("Split Vie&w Left-Right"), settingOwner),
                  nullptr, consoleTabulator, SLOT(splitVertically()), menu_Actions);
 
+    menu_Actions->addSeparator();
+
     data.setValue(checkSubterminals);
 
+    setup_Action(TOGGLE_TERMINAL_MAXIMIZED, new QAction(tr("Toggle Subterminal &Maximized"), settingOwner),
+                 nullptr, consoleTabulator, SLOT(toggleCurrentMaximized()), menu_Actions, data);
     setup_Action(SUB_COLLAPSE, new QAction(tr("&Close Subterminal"), settingOwner),
                  nullptr, consoleTabulator, SLOT(splitCollapse()), menu_Actions, data);
 
@@ -961,6 +968,10 @@ void MainWindow::showEvent(QShowEvent* event)
             twl.at(0)->setSize(m_initialSize.width(), m_initialSize.height());
         m_initialSize = QSize();
     }
+
+    // unconditionally here. QTabWidget lays out lazily and the (initial) terminal
+    // must know when this is done - ideally after the user specified size is set above
+    setProperty("terminal_size_pending", false);
 
     QMainWindow::showEvent(event);
 }

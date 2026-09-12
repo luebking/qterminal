@@ -78,6 +78,8 @@ class TermWidgetHolder : public QWidget
 
 
     public slots:
+        void maximize(TermWidget *term);
+        void toggleMaximized(TermWidget *term);
         void splitHorizontal(TermWidget * term);
         void splitVertical(TermWidget * term);
         void splitCollapse(TermWidget * term);

@@ -49,6 +49,7 @@ static int TermWidgetCount = 0;
 
 TermWidgetImpl::TermWidgetImpl(TerminalConfig &cfg, QWidget * parent)
     : QTermWidget(0, parent)
+    , scheduledShellProgramStart(false)
 #ifdef HAVE_LIBCANBERRA
     , libcanberra_context(nullptr)
 #endif
@@ -107,7 +108,10 @@ TermWidgetImpl::TermWidgetImpl(TerminalConfig &cfg, QWidget * parent)
     connect(this, &QTermWidget::urlActivated, this, &TermWidgetImpl::activateUrl);
     connect(this, &QTermWidget::bell, this, &TermWidgetImpl::bell);
 
-    startShellProgram();
+    scheduledShellProgramStart = window()->property("terminal_size_pending").toBool();
+    if (!scheduledShellProgramStart) {
+        QTimer::singleShot(0, this, &TermWidgetImpl::startShellProgram);
+    }
 }
 
 TermWidgetImpl::~TermWidgetImpl()
@@ -117,6 +121,21 @@ TermWidgetImpl::~TermWidgetImpl()
         ca_context_destroy (libcanberra_context);
     }
 #endif
+}
+
+void TermWidgetImpl::showEvent(QShowEvent *se)
+{
+    if (scheduledShellProgramStart)
+    {
+        QTimer::singleShot(0, this, [=,this]()
+        {
+            scheduledShellProgramStart = window()->property("terminal_size_pending").toBool();
+            if (!scheduledShellProgramStart) {
+                QTimer::singleShot(0, this, &TermWidgetImpl::startShellProgram);
+            }
+        });
+    }
+    QTermWidget::showEvent(se);
 }
 
 void TermWidgetImpl::propertiesChanged()
@@ -216,6 +235,7 @@ void TermWidgetImpl::customContextMenuCall(const QPoint & pos)
     menu.addAction(actions[QStringLiteral(SPLIT_HORIZONTAL)]);
     menu.addAction(actions[QStringLiteral(SPLIT_VERTICAL)]);
     // warning TODO/FIXME: disable the action when there is only one terminal
+    menu.addAction(actions[QStringLiteral(TOGGLE_TERMINAL_MAXIMIZED)]);
     menu.addAction(actions[QStringLiteral(SUB_COLLAPSE)]);
     menu.addSeparator();
     menu.addAction(actions[QStringLiteral(TOGGLE_MENU)]);
